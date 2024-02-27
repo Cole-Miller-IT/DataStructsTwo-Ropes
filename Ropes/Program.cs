@@ -29,7 +29,7 @@ public class Rope {
     Node root = null;
 
     ///////////////////////Public methods////////////////////////////////
-    //Create a balanced rope from a given string S(5 marks).
+    //Create a balanced rope from a given string S(5 marks). DONE
     public Rope(string S) {
         root = Build(S, 0, S.Length);
 
@@ -53,12 +53,45 @@ public class Rope {
 
     //Return the index of the first occurrence of S; -1 otherwise(9 marks).
     public int Find(string S) {
+
+
+
         return -1;
     }
 
-    //Return the character at index i(3 marks).
+    //Return the character at index i(3 marks). DONE
     public char CharAt(int i) {
-        return 'z';
+        var current = root;
+        bool searching = true;
+
+        //If the index is outside of the Rope's length
+        if ((i > root.Length) || (i < 0)) { 
+            return '\0';
+        }
+
+        //Search for the index
+        while (searching) {
+            //if we are at an internal node
+            if (current.Left != null) {
+                if (i < current.Left.Length) {
+                    //Go left
+                    current = current.Left;
+                    //Console.WriteLine("Moved left");
+                } 
+                else {
+                    //Go right
+                    i = i - current.Left.Length;
+                    current = current.Right;
+                    //Console.WriteLine("Moved right");
+                }
+            } 
+            //else, we are at a leaf node where the index should
+            else {
+                return current.stringCharacters[i];
+            }
+        }
+        //Didn't find the index, shouldn't ever get here
+        return '\0';
     }
 
     //Return the index of the first occurrence of character c(4 marks).
@@ -71,9 +104,13 @@ public class Rope {
 
     }
 
-    //Return the length of the string (1 mark).
+    //Return the length of the string (1 mark). DONE
     public int Length() {
-        return -1;
+        if (root == null) {
+            return -1;
+        }
+
+        return root.Length;
     }
 
     //Return the string represented by the current rope(4 marks).
@@ -81,7 +118,7 @@ public class Rope {
         return "-1";
     }
 
-    //Print the augmented binary tree of the current rope(4 marks).
+    //Print the augmented binary tree of the current rope (4 marks). DONE
     public void PrintRope() {
         PrintRope(this.root, 0);
     }
@@ -104,7 +141,7 @@ public class Rope {
 
     ////////////////////////Private Methods////////////////////////////////
 
-    //Recursively build a balanced rope for S[i, j] and return its root (part of the constructor).
+    //Recursively build a balanced rope for S[i, j] and return its root (part of the constructor). DONE
     private Node Build(string s, int i, int j) {
         // Base case: when the substring length is less than or equal to maxLeafStringLength
         if ((j - i) <= maxLeafStringLength) {
@@ -154,9 +191,19 @@ class Program {
         //Console.WriteLine("Hello World!");
 
         //Rope myRope = new Rope("H");                  //Test one character
-        //Rope myRope = new Rope("Hello Worl");           //Test 10 characters
-        Rope myRope = new Rope("Hello World!");       //Test more than 10 characters
+        //Rope myRope = new Rope("Hello Worl");         //Test 10 characters
+        Rope myRope = new Rope("abcdefghijklomnpqrstuvwxyz ABCDEFG");         //Test more than 10 characters
         //string myString = "A string, by definition, is a linear sequence of characters representing a word, sentence, or body of text. Not surprisingly, strings are an integral and convenient part of most high - level programming languages. In C#, strings are supported by the String and StringBuilder library classes which include standard methods to concatenate two strings, return a substring, find the character at a given index, find the index of a given character, among others. Intuitively, each string is implemented as a linear array of characters which for the most part works reasonably well.For methods that retrieve characters or substrings, the linear array is ideal.But as a length of the string grows considerably longer as in the case of text, methods that require a wholesale shift or copy of characters are slowed by their linear time complexity.The question then arises: Can we do better overall for very long strings ?";
-        //Rope myRope = new Rope(myString);       //Test a paragraph
+        //Rope myRope = new Rope(myString);             //Test a paragraph
+
+        Console.WriteLine(myRope.Length());
+
+        Console.WriteLine(myRope.CharAt(-1));           //Test invalid index
+        Console.WriteLine(myRope.CharAt(999));          //Test invalid index
+        Console.WriteLine(myRope.CharAt(0));            //Test going left
+        Console.WriteLine(myRope.CharAt(33));           //Test going right
+        Console.WriteLine(myRope.CharAt(9));            //Test going left then right
+        Console.WriteLine(myRope.CharAt(17));           //Test going right then left
+
     }
 }
