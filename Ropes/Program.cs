@@ -1,7 +1,5 @@
 ﻿using System;
-
-
-
+using System.Reflection.PortableExecutable;
 
 //1.After a Split, compress the path back to the root to ensure that binary tree is full, i.e. each non-leaf
 //node has two non - empty children(4 marks).
@@ -94,14 +92,100 @@ public class Rope {
         return '\0';
     }
 
-    //Return the index of the first occurrence of character c(4 marks).
+    //Return the index of the first occurrence of character c (4 marks). DONE
     public int IndexOf(char c) {
-        return -1;
+        //Recursive search algorithm for the IndexOf() function
+        (int, int) IndexOfSearch(char c, Node current, int foundIndex, int searchingIndex) {
+            //Explore the left subtrees first, going left-to-right along the leaf nodes
+
+            //If the left subtree is not empty and char c's index has not been found
+            if (current.Left != null && foundIndex == -1) {
+                //Explore the left subtree
+                (searchingIndex, foundIndex) = IndexOfSearch(c, current.Left, foundIndex, searchingIndex);
+            }
+
+            //If the right subtree is not empty and char c's index has not been found
+            if (current.Right != null && foundIndex == -1) {
+                //Explore the right subtree
+                (searchingIndex, foundIndex) = IndexOfSearch(c, current.Right, foundIndex, searchingIndex);
+            }
+
+            //if at a leaf node (both children are null) and char c's index has not been found
+            if (((current.Left == null) && (current.Right == null)) && foundIndex == -1) {
+                //Check all characters in the string at the current leaf node
+                for (int i = 0; i < current.stringCharacters.Length; i++) {
+                    if (c == current.stringCharacters[i]) {
+                        //Found first occurence of the character
+                        searchingIndex = searchingIndex + i;
+                        //Console.WriteLine("Found character " + c + " at index: " + searchingIndex);
+                        foundIndex = searchingIndex;
+
+                        return (searchingIndex, foundIndex);
+                    }
+                }
+            }
+
+            //Determine what to send back going up the recursive stack
+            if (foundIndex != -1) {
+                //Send back the found index
+                return (searchingIndex, foundIndex);
+            } else {
+                //If the character wasn't found here then return the sum of the length of trees of the parent
+                searchingIndex = searchingIndex + current.stringCharacters.Length;
+                return (searchingIndex, -1);
+            }
+        }
+
+        int foundIndex = -1;
+        int searchingIndex = 0;
+        (searchingIndex, foundIndex) = IndexOfSearch(c, root, foundIndex, searchingIndex);
+
+        return foundIndex;
     }
 
-    //Reverse the string represented by the current rope(5 marks).
+    //Reverse the string represented by the current rope(5 marks). DONE
     public void Reverse() {
+        static string ReverseString(string s) {
+            char[] charArray = s.ToCharArray();
+            Array.Reverse(charArray);
+            return new string(charArray);
+        }
 
+        void ReverseTraversal(Node current) {
+            if (current != null) {
+                //Check if current has a left and right subtree
+                if ((current.Left != null && current.Right != null)) {
+                    //Swap them (left becomes right and vice versa)
+                    Node temp = current.Left;
+                    current.Left = current.Right;
+                    current.Right = temp;
+
+                    //if the swapped nodes are leaf nodes
+                    if (current.Left.Left == null) {
+                        //Reverse thier strings
+                        current.Left.stringCharacters = ReverseString(current.Left.stringCharacters);
+                        current.Right.stringCharacters = ReverseString(current.Right.stringCharacters);
+                    }
+                }
+
+                //Special Case: Only the root node exists
+                if (current == root) {
+                    //Reverse the roots string
+                    current.stringCharacters = ReverseString(current.stringCharacters);
+                }
+
+                //Move down the tree
+                if (current.Left != null) {
+                    ReverseTraversal(current.Left);
+                }
+                if (current.Right != null) {
+                    ReverseTraversal(current.Right);
+                }
+            }
+        }
+
+
+        ReverseTraversal(root);
     }
 
     //Return the length of the string (1 mark). DONE
@@ -113,31 +197,33 @@ public class Rope {
         return root.Length;
     }
 
-    //Return the string represented by the current rope(4 marks).
+    //Return the string represented by the current rope (4 marks).
     public string ToString() {
         return "-1";
     }
 
     //Print the augmented binary tree of the current rope (4 marks). DONE
     public void PrintRope() {
+        // Helper method to print the rope recursively
+        void PrintRope(Node node, int depth) {
+            if (node == null)
+                return;
+
+            // Print the right subtree first, with increased indentation
+            PrintRope(node.Right, depth + 1);
+
+            // Print the current node: indent based on its depth
+            Console.Write(new string(' ', depth * 4)); // 4 spaces per depth level
+            Console.WriteLine($"{node.stringCharacters} ({node.Length})");
+
+            // Print the left subtree with increased indentation
+            PrintRope(node.Left, depth + 1);
+        }
+
         PrintRope(this.root, 0);
     }
 
-    // Helper method to print the rope recursively
-    private void PrintRope(Node node, int depth) {
-        if (node == null)
-            return;
-
-        // Print the right subtree first, with increased indentation
-        PrintRope(node.Right, depth + 1);
-
-        // Print the current node: indent based on its depth
-        Console.Write(new string(' ', depth * 4)); // 4 spaces per depth level
-        Console.WriteLine($"{node.stringCharacters} ({node.Length})");
-
-        // Print the left subtree with increased indentation
-        PrintRope(node.Left, depth + 1);
-    }
+    
 
     ////////////////////////Private Methods////////////////////////////////
 
@@ -192,7 +278,7 @@ class Program {
 
         //Rope myRope = new Rope("H");                  //Test one character
         //Rope myRope = new Rope("Hello Worl");         //Test 10 characters
-        Rope myRope = new Rope("abcdefghijklomnpqrstuvwxyz ABCDEFG");         //Test more than 10 characters
+        Rope myRope = new Rope("abcdefghijklomnpqrstuvwxyz ABCDEFGa");         //Test more than 10 characters
         //string myString = "A string, by definition, is a linear sequence of characters representing a word, sentence, or body of text. Not surprisingly, strings are an integral and convenient part of most high - level programming languages. In C#, strings are supported by the String and StringBuilder library classes which include standard methods to concatenate two strings, return a substring, find the character at a given index, find the index of a given character, among others. Intuitively, each string is implemented as a linear array of characters which for the most part works reasonably well.For methods that retrieve characters or substrings, the linear array is ideal.But as a length of the string grows considerably longer as in the case of text, methods that require a wholesale shift or copy of characters are slowed by their linear time complexity.The question then arises: Can we do better overall for very long strings ?";
         //Rope myRope = new Rope(myString);             //Test a paragraph
 
@@ -204,6 +290,22 @@ class Program {
         Console.WriteLine(myRope.CharAt(33));           //Test going right
         Console.WriteLine(myRope.CharAt(9));            //Test going left then right
         Console.WriteLine(myRope.CharAt(17));           //Test going right then left
+
+        Console.WriteLine("location of c at index: " + myRope.IndexOf('c'));         //Test valid character
+        Console.WriteLine("location of k at index: " + myRope.IndexOf('k'));         //Test valid character
+        Console.WriteLine("location of y at index: " + myRope.IndexOf('y'));         //Test valid character
+        Console.WriteLine("location of _ at index: " + myRope.IndexOf(' '));         //Test valid character
+        Console.WriteLine("location of P at index: " + myRope.IndexOf('P'));         //Test invalid character
+        Console.WriteLine("location of a at index: " + myRope.IndexOf('a'));         //Test valid character with two chars in array
+
+        
+        Rope myReverseRope = new Rope("abcdefg");                       //Testing Reverse() with only the root node       
+        myReverseRope.Reverse();
+        myReverseRope.PrintRope();
+
+        myReverseRope = new Rope("Hello World! Goodbye World!");        //Testing Reverse() with multiple leaf nodes     
+        myReverseRope.Reverse();
+        myReverseRope.PrintRope();
 
     }
 }
