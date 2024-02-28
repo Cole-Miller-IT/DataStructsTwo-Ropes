@@ -223,7 +223,12 @@ public class Rope {
         PrintRope(this.root, 0);
     }
 
-    
+    public void Debug() {
+        Split(root, 5);
+
+
+        PrintRope();
+    }
 
     ////////////////////////Private Methods////////////////////////////////
 
@@ -253,13 +258,82 @@ public class Rope {
         }
     }
 
-    //Return the root of the rope constructed by concatenating two ropes with roots p and q(3 marks).
+    //Return the root of the rope constructed by concatenating two ropes with roots p and q (3 marks). DONE
     private Node Concatenate(Node p, Node q) {
-        return new Node("-1");
+        Node newRoot = new Node("");
+        
+        //Connect the two subtrees (p and q) to newRoot
+        newRoot.Left = p;
+        newRoot.Right = q;
+        newRoot.Length = p.Length + q.Length;
+
+        return newRoot;
     }
 
     //Split the rope with root p at index i and return the root of the right subtree (9 marks).
     private Node Split(Node p, int i) {
+        //Go down the tree until you find the index you are looking for
+        void traverse(Node current, int index) {
+            //if (index < current nodes length) && we are at a leaf node
+            if (index < current.Length && (current.stringCharacters != "")) {
+                //found node that contains the index
+                Console.WriteLine("Index " + index + " will be located at node with string " + current.stringCharacters);
+                
+                //if the index is not at either of the ends of the string (first or last character)
+                if ((index != 0) && (index != (current.Length - 1))) {
+                    //the string contained at this node needs to be split in half
+                    Console.WriteLine("node needs to be split");
+
+                    //Determine what the left and right strings will contain
+                    string leftString = current.stringCharacters.Substring(0, index);
+                    string rightString = current.stringCharacters.Substring(index);
+
+                    //Make two new nodes to hold the split string
+                    Node leftChild = new Node(leftString);
+                    leftChild.Length = leftString.Length;
+
+                    Node rightChild = new Node(rightString);
+                    rightChild.Length = rightString.Length;
+
+                    //link the nodes to the tree
+                    current.Left = leftChild;
+                    current.Right = rightChild;
+
+                    Console.WriteLine("");
+
+                    //Going back up
+                }
+                //
+                else {
+                    Console.WriteLine("node doesn't need to be split");
+
+                    //Going back up
+                }
+
+            }
+            //Keep searching
+            else {
+                if (index < current.Left.Length) {
+                    //Go left
+                    Console.WriteLine("Going left");
+                    traverse(current.Left, i);
+
+                    //Going back up
+                } else {
+                    //Go right
+                    i = i - current.Left.Length;
+                    Console.WriteLine("Going right");
+                    traverse(current.Right, i);
+
+                    //Going back up
+                }
+            }
+
+        }
+
+        traverse(root, i);
+
+
         return new Node("-1");
     }
 
@@ -306,6 +380,10 @@ class Program {
         myReverseRope = new Rope("Hello World! Goodbye World!");        //Testing Reverse() with multiple leaf nodes     
         myReverseRope.Reverse();
         myReverseRope.PrintRope();
+        Console.WriteLine("");
 
+
+        Rope mySplitRope = new Rope("abcdefghijklmnop");        //Testing split   
+        mySplitRope.Debug();
     }
 }
