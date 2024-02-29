@@ -14,7 +14,7 @@ using System.Reflection;
 [assembly: System.Reflection.AssemblyCompanyAttribute("Ropes")]
 [assembly: System.Reflection.AssemblyConfigurationAttribute("Debug")]
 [assembly: System.Reflection.AssemblyFileVersionAttribute("1.0.0.0")]
-[assembly: System.Reflection.AssemblyInformationalVersionAttribute("1.0.0+47b6cfd8ca9ff5f9d0590132d4b980740db4150a")]
+[assembly: System.Reflection.AssemblyInformationalVersionAttribute("1.0.0+11971ec4458f723ef23bc68c4a30456a72a75925")]
 [assembly: System.Reflection.AssemblyProductAttribute("Ropes")]
 [assembly: System.Reflection.AssemblyTitleAttribute("Ropes")]
 [assembly: System.Reflection.AssemblyVersionAttribute("1.0.0.0")]

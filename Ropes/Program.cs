@@ -1,4 +1,5 @@
 ﻿using System;
+using System.Reflection;
 using System.Reflection.PortableExecutable;
 
 //1.After a Split, compress the path back to the root to ensure that binary tree is full, i.e. each non-leaf
@@ -204,27 +205,27 @@ public class Rope {
 
     //Print the augmented binary tree of the current rope (4 marks). DONE
     public void PrintRope() {
-        // Helper method to print the rope recursively
-        void PrintRope(Node node, int depth) {
-            if (node == null)
-                return;
-
-            // Print the right subtree first, with increased indentation
-            PrintRope(node.Right, depth + 1);
-
-            // Print the current node: indent based on its depth
-            Console.Write(new string(' ', depth * 4)); // 4 spaces per depth level
-            Console.WriteLine($"{node.stringCharacters} ({node.Length})");
-
-            // Print the left subtree with increased indentation
-            PrintRope(node.Left, depth + 1);
-        }
-
         PrintRope(this.root, 0);
     }
 
+    // Helper method to print the rope recursively
+    private void PrintRope(Node node, int depth) {
+        if (node == null)
+            return;
+
+        // Print the right subtree first, with increased indentation
+        PrintRope(node.Right, depth + 1);
+
+        // Print the current node: indent based on its depth
+        Console.Write(new string(' ', depth * 4)); // 4 spaces per depth level
+        Console.WriteLine($"{node.stringCharacters} ({node.Length})");
+
+        // Print the left subtree with increased indentation
+        PrintRope(node.Left, depth + 1);
+    }
+
     public void Debug() {
-        Split(root, 5);
+        root = Split(root, 5);
 
 
         PrintRope();
@@ -272,17 +273,45 @@ public class Rope {
 
     //Split the rope with root p at index i and return the root of the right subtree (9 marks).
     private Node Split(Node p, int i) {
+        //Builds the right tree going back up from the recursive calls
+        Node splitUp(Node current, Node rightRoot, int index) {
+            //if the right child is on the right side after the split
+            if ((current.Length - current.Left.Length) > index) {
+                //If there isn't an open space
+                if (rightRoot.Left != null && rightRoot.Right != null) {
+                    rightRoot = Concatenate(rightRoot, current.Right);
+                    //Console.WriteLine("no space");
+                    rightRoot.Length = rightRoot.Left.Length;
+                } else {
+                    //Console.WriteLine("space");
+                    //If there is an open space
+                    if (rightRoot.Left == null) {
+                        rightRoot.Left = current.Right;
+                        //Console.WriteLine("left");
+                    }
+                    if (rightRoot.Right == null) {
+                        rightRoot.Right = current.Right;
+                        //Console.WriteLine("right");
+                    }
+                    rightRoot.Length = rightRoot.Left.Length + rightRoot.Right.Length;
+                }
+            }
+            return rightRoot;
+        }
+        
         //Go down the tree until you find the index you are looking for
-        void traverse(Node current, int index) {
+        Node traverse(Node current, int index) {
+            Node rightRoot = null;
+
             //if (index < current nodes length) && we are at a leaf node
             if (index < current.Length && (current.stringCharacters != "")) {
                 //found node that contains the index
-                Console.WriteLine("Index " + index + " will be located at node with string " + current.stringCharacters);
+                //Console.WriteLine("Index " + index + " will be located at node with string " + current.stringCharacters);
                 
                 //if the index is not at either of the ends of the string (first or last character)
                 if ((index != 0) && (index != (current.Length - 1))) {
                     //the string contained at this node needs to be split in half
-                    Console.WriteLine("node needs to be split");
+                    //Console.WriteLine("node needs to be split");
 
                     //Determine what the left and right strings will contain
                     string leftString = current.stringCharacters.Substring(0, index);
@@ -299,42 +328,57 @@ public class Rope {
                     current.Left = leftChild;
                     current.Right = rightChild;
 
-                    Console.WriteLine("");
+                    //Console.WriteLine("");
 
                     //Going back up
+                    rightRoot = new Node("");
+                    rightRoot.Left = current.Right;
+                    rightRoot.Length = rightRoot.Left.Length;
+
+                    PrintRope(rightRoot, 0);
+                    Console.WriteLine("");
+
+                    return rightRoot;
                 }
                 //
                 else {
                     Console.WriteLine("node doesn't need to be split");
 
-                    //Going back up
-                }
+                    //Determine what is on the left and right sides
 
+                    //Going back up
+                    return new Node("");
+                }
             }
             //Keep searching
             else {
                 if (index < current.Left.Length) {
                     //Go left
                     Console.WriteLine("Going left");
-                    traverse(current.Left, i);
+                    rightRoot = traverse(current.Left, i);
 
                     //Going back up
+                    rightRoot = splitUp(current, rightRoot, i);
+
                 } else {
                     //Go right
                     i = i - current.Left.Length;
                     Console.WriteLine("Going right");
-                    traverse(current.Right, i);
+                    rightRoot = traverse(current.Right, i);
 
                     //Going back up
+                    rightRoot = splitUp(current, rightRoot, i);
                 }
+                return rightRoot;
             }
-
         }
 
-        traverse(root, i);
-
-
-        return new Node("-1");
+        //if the Rope is empty
+        if (p == null || p.stringCharacters == "") {
+            return root;
+        }
+        
+        return traverse(root, i);
     }
 
     //Rebalance the rope using the algorithm found on pages 1319 - 1320 of Boehm et al. (9 marks).
@@ -383,7 +427,14 @@ class Program {
         Console.WriteLine("");
 
 
-        Rope mySplitRope = new Rope("abcdefghijklmnop");        //Testing split   
+        Rope mySplitRope = new Rope("abcdefghijklmnop");        //Testing split on a normal rope
+        mySplitRope = new Rope("");                             //Testing split on an empty rope
+        mySplitRope.Debug();
+
+        mySplitRope = new Rope("Hello ");                       //Testing split 
+        mySplitRope.Debug();
+
+        mySplitRope = new Rope("aaaaaaaaaaaaaabbbbbbbbbbbbbccccccccccccddddddddddddddeeeeeeeeeeeeeeffffffffffffffggggggggggggghhhhhhhhhh");             //Testing split 
         mySplitRope.Debug();
     }
 }
