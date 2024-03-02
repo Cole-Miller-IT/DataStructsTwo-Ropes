@@ -199,9 +199,35 @@ public class Rope {
         return root.Length;
     }
 
-    //Return the string represented by the current rope (4 marks).
-    public string ToString() {
-        return "-1";
+    //Return the string represented by the current rope (4 marks). DONE
+    override public string ToString() {
+        string ToStringPrivate(Node current) {
+            string leftString = null;
+            string rightString = null;
+            if (current.Left != null) {
+                //Go left
+                //Console.WriteLine("left");
+                leftString = ToStringPrivate(current.Left);
+            }
+            if (current.Right != null) {
+                //Go right
+                //Console.WriteLine("right");
+                rightString = ToStringPrivate(current.Right);
+            }
+            if ((current.Left == null) && (current.Right == null)) {
+                //At a leaf node
+                //Console.WriteLine("LEaf");
+                //Console.WriteLine(current.stringCharacters);
+                return current.stringCharacters;
+            }
+
+            string finalString = leftString + rightString;
+            //Console.WriteLine(finalString);
+            return finalString;
+        }
+
+        //PrintRope(root, 0);
+        return ToStringPrivate(root);
     }
 
     //Print the augmented binary tree of the current rope (4 marks). DONE
@@ -225,6 +251,7 @@ public class Rope {
         PrintRope(node.Left, depth + 1);
     }
 
+    //Tests the split() method b/c it's private
     public void TestSplit(int index) {
         Console.WriteLine("------------------------------");
         Console.WriteLine("");
@@ -458,6 +485,7 @@ class Program {
         Console.WriteLine("");
         */
 
+        /*
         //Testing split on a normal rope
         Rope mySplitRope = new Rope("abcdefghijklmnop");          
         mySplitRope.TestSplit(0);       //Test Left, right side split
@@ -514,5 +542,27 @@ class Program {
         
         mySplitRope = new Rope("Hello ");
         mySplitRope.TestSplit(2);
+        */
+
+
+        //Testing ToString()
+        /*
+        Rope myRope = new Rope("");         //Test empty
+        Console.WriteLine(myRope.ToString());
+
+        myRope = new Rope("H");     //Test 1 char
+        Console.WriteLine(myRope.ToString());
+
+        myRope = new Rope("Hello World!"); //Test a sentence
+        Console.WriteLine(myRope.ToString());
+
+        myRope = new Rope("aaaaaaaabbbbbbbbccccccccddddddddeeeeeeeeffffffffgggggggghhhhhhhh");  //Test a bigger Rope
+        Console.WriteLine(myRope.ToString());
+
+        myRope = new Rope("aaaaaaaaaabbbbbbbbbb"); //Test an evenly split rope
+        Console.WriteLine(myRope.ToString());
+
+        myRope = new Rope("aaaaaaaaaabbbbbbbbbbc"); //Test an unevenly split rope
+        Console.WriteLine(myRope.ToString());*/
     }
 }
