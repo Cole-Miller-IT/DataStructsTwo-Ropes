@@ -1,7 +1,10 @@
 ﻿using System;
+using System.Collections.Generic;
 using System.Reflection;
 using System.Reflection.PortableExecutable;
+using System.Xml.Linq;
 
+//Implement this 2 compress/rebalance methods
 //1.After a Split, compress the path back to the root to ensure that binary tree is full, i.e. each non-leaf
 //node has two non - empty children(4 marks).
 
@@ -20,11 +23,23 @@ public class Node {
         Length = 0;
         Left = Right = null;
     }
+
+    // Method to deep copy this node and its subtree
+    public Node DeepCopy() {
+        Node newNode = new Node(this.stringCharacters);
+        newNode.Length = this.Length; // Copy the length
+        if (this.Left != null) {
+            newNode.Left = this.Left.DeepCopy(); // Recursively copy the left child
+        }
+        if (this.Right != null) {
+            newNode.Right = this.Right.DeepCopy(); // Recursively copy the right child
+        }
+        return newNode; // Return the new deep-copied node
+    }
 }
 
 public class Rope {
     const int maxLeafStringLength = 10; //Final length
-    //const int maxLeafStringLength = 3;   //Debugging
     Node root = null;
 
     ///////////////////////Public methods////////////////////////////////
@@ -49,12 +64,27 @@ public class Rope {
 
     //Return the substring S[i, j](6 marks).
     public string Substring(int i, int j) {
+        Node tempRoot = root;
+
+        tempRoot = Split(tempRoot, i);
+        string iString = tempRoot.stringCharacters;
+        Console.WriteLine(iString);
+
+        //newRoot = Split(root, j);
+        //string jString = newRoot.stringCharacters;
+        //Console.WriteLine(jString);
+
+        //string returnString = iString.Remove();
+
+        //return returnString;
         return "-1";
     }
 
     //Return the index of the first occurrence of S; -1 otherwise(9 marks).
     public int Find(string S) {
+        //Keep a backup of the Root
 
+        //Call substring until you go through the whole Rope
 
 
         return -1;
@@ -259,11 +289,64 @@ public class Rope {
         Console.WriteLine("Before split");
         PrintRope();
 
-        root = Split(root, index);
+        //root = Split(root, index);
+
+        Node rightTree = Split(root, index);
+        //Rebalance(); //Rebalance the left tree (root) after splitting
 
         Console.WriteLine("");
-        Console.WriteLine("After split");
+        Console.WriteLine("After split: Right");
+        PrintRope(rightTree, 0);
+
+        //Console.WriteLine("");
+        //Console.WriteLine("After split: Left");
+        //PrintRope(root, 0);
+    }
+
+    //Tests the split() method b/c it's private
+    public void TestRebalance(int index) {
+        Console.WriteLine("------------------------------");
+        Console.WriteLine("");
+        Console.WriteLine("Index to split is: " + index);
+        Console.WriteLine("Before split");
         PrintRope();
+
+        //root = Split(root, index);
+
+        Node rightTree = Split(root, index);
+        //Rebalance(); //Rebalance the left tree (root) after splitting
+
+        Console.WriteLine("");
+        Console.WriteLine("After split: Right");
+        PrintRope(rightTree, 0);
+
+        Console.WriteLine("");
+        Console.WriteLine("After split: Left");
+        PrintRope(root, 0);
+    }
+
+    // Method to compare two trees
+    public static bool AreEqual(Node node1, Node node2) {
+        // Check if both nodes are null (implies trees are the same up to this point)
+        if (node1 == null && node2 == null) {
+            return true;
+        }
+
+        // If one is null and the other is not, trees are not the same
+        if (node1 == null || node2 == null) {
+            return false;
+        }
+
+        // Check the current node's properties
+        bool areCurrentNodesEqual = node1.stringCharacters == node2.stringCharacters
+                                    && node1.Length == node2.Length;
+
+        // Recursively check left and right subtrees
+        bool areLeftSubtreesEqual = AreEqual(node1.Left, node2.Left);
+        bool areRightSubtreesEqual = AreEqual(node1.Right, node2.Right);
+
+        // Current nodes and their subtrees must be equal
+        return areCurrentNodesEqual && areLeftSubtreesEqual && areRightSubtreesEqual;
     }
 
     ////////////////////////Private Methods////////////////////////////////
@@ -308,12 +391,48 @@ public class Rope {
 
     //Rebalance the rope using the algorithm found on pages 1319 - 1320 of Boehm et al. (9 marks).
     private Node Rebalance() {
+        // Recursively traverse the rope, inserting leaves and subtrees into the sequence based on their length
+        void FillSequence(Node node, List<Node> sequence) {
+            if (node.Left != null) { 
+                //Go left
+                FillSequence(node.Left, sequence);
+            }
+            if (node.Right != null) {
+                //Go Right
+                FillSequence(node.Right, sequence);
+            }
+            if (node.Left == null && node.Right == null) { 
+                //At leaf
+                sequence.Add(node);
+            }
+        }
+
+        Node ConcatenateSequence(List<Node> sequence) {
+            // Concatenate all nodes in the sequence from smallest to largest
+            Node result = null;
+            foreach (var node in sequence) {
+                result = Concatenate(result, node); // Implement Concatenate to merge two ropes
+            }
+            return result;
+        }
+
+        List<Node> sequence = new List<Node>(); // To store ropes of different sizes
+        FillSequence(root, sequence);
+
+        /*Console.WriteLine("Sequence leafs: ");
+        for (int i = 0; i < sequence.Count; i++) {
+            Console.WriteLine(sequence[i].stringCharacters);
+        }*/
+
+        //return ConcatenateSequence(sequence);
+
+
         return new Node("-1");
     }
 
-    //Time complexity for figuring out this method O(too got damn long x2) 
+    //Time complexity for figuring out this method O(too got damn long x3) 
     //Split the rope with root p at index i and return the root of the right subtree (9 marks). DONE
-    private Node Split(Node p, int i) {
+    /*private Node Split(Node p, int i) {
         //Split a node's string into 2 parts, creates 2 new nodes to hold the left and right piece, then update p to refer to the new nodes
         Node SplitNode(Node p, int i) {
             string leftString = p.stringCharacters.Substring(0, i + 1);
@@ -335,39 +454,71 @@ public class Rope {
             return p;
         }
 
+        //Checks if a node's right child is on the right side of the split
+        bool inRightSplitArea(Node rightChild, int i) {
+            //Console.WriteLine(i);
+            if (i == 0) {
+                //Right node could be on the right side
+                return true;
+            } 
+            else {
+                return false;
+            }
+        }
+
         //Handles building the right subtree going back up the recursive calls for the internal nodes
-        Node SplitUp(Node p, Node previousRightTree, int i) {
+        Node SplitUp(ref Node p, Node previousRightTree, int i) {
             Node rightTree = previousRightTree;
 
             //is p (current node) on the right side of the split
             if (i == 0) {
                 //Right of split
-                rightTree = p;
+                Console.WriteLine("current is right");
+                rightTree = p.DeepCopy();
+                p = new Node("");
                 return rightTree;
             } 
             else {
                 //Left of split
+                Console.WriteLine("-------current (p) left of split--------");
+                Console.WriteLine("i: " + i);
+                Console.WriteLine("p (current node): ");
+                PrintRope(p, 0);
+                Console.WriteLine("");
+                Console.WriteLine("rightTree");
+                PrintRope(rightTree, 0);
+                Console.WriteLine("");
                 //is p.Right on the right or left side of the split
-                if (i <= ((p.Length - 1) - p.Right.Length)) {
+                //if ((i <= ((p.Length - 1) - p.Right.Length))) {
+                if (inRightSplitArea(p.Right, i - p.Left.Length)) {
                     //Right of split
-                    //Console.WriteLine("rights");
+                    Console.WriteLine("p.right right of split");
 
                     //is my right child different from what is currently in the right tree node
-                    //This might need to be changed, the comparison
-                    if (p.Right != rightTree) {
-                        //yes, concatenate the rightTree and p.Right's child to form a new rightTree,
-                        rightTree = Concatenate(rightTree, p.Right);
-                        return rightTree;
+                    if (!AreEqual(p.Right, rightTree)) {
+                        Console.WriteLine("p.right diferent from rightTree");
+                        //yes
+                        if (rightTree != null) {
+                            //concatenate the rightTree and p.Right's child to form a new rightTree,
+                            Console.WriteLine("Concat current rightTree and p.Right");
+                            rightTree = Concatenate(rightTree, p.Right);
+                            PrintRope(rightTree, 0);
+                        } else {
+                            rightTree = p.Right.DeepCopy();
+                        }
+                        
                     } 
                     else {
-                        //no, do nothing
-                        return rightTree;
+                        //no
+                        //Console.WriteLine("p.right same as righTree");
                     }
+                    p.Right = null;
+                    return rightTree;
                 }   
                 else {
                     //Left of split
                     //just pass along what is already in the right tree
-                    //Console.WriteLine("leftss");
+                    Console.WriteLine("p.right left of split");
                     return rightTree;
                 }
             }
@@ -398,8 +549,13 @@ public class Rope {
                 //Case 1: i refers to a char somewhere in the middle of the string
                 p = SplitNode(p, i);
 
-                //But we just want the node right of the split so
-                p = p.Right;
+                rightSubtree = p.Right.DeepCopy(); ;
+                rightSubtree.Length = rightSubtree.stringCharacters.Length;
+
+                p.Right = null;
+                p.Length = p.Left.Length;
+
+                //p = p.Right;
             } 
             else {
                 //Case 2: i refers to the left or right most char in the string
@@ -407,41 +563,215 @@ public class Rope {
 
                 //Determine what to send back
                 if (i == 0) {
-                    //Console.WriteLine("left of split");
-                    //do nothing
+                    //Console.WriteLine("leaf right of split");
+                    rightSubtree = p.DeepCopy();
+                    rightSubtree.Length = rightSubtree.stringCharacters.Length;
+                    p = null;
                 } 
                 else {
-                    //Console.WriteLine("right of split");
-                    return new Node("");
+                    //Console.WriteLine("leaf left of split");
+                    rightSubtree = null;
                 }
             }
             //Console.WriteLine("leaf node");
+            //Console.WriteLine("p:");
             //PrintRope(p, 0);
-            return p;
+            //Console.WriteLine("rightTree:");
+            //PrintRope(rightSubtree, 0);
+            return rightSubtree;
         } 
         else if (i < p.Left.Length) {
             //Go Left
             //Console.WriteLine("Go left down");
             rightSubtree = Split(p.Left, i);
+            //Console.WriteLine("right tree after split()");
+            //PrintRope(rightSubtree, 0);
             
             //Going up
             //Console.WriteLine("Going up");
             //Console.WriteLine("index: " + i);
-            rightSubtree = SplitUp(p, rightSubtree, i);
+            i = i + p.Left.Length;
+            rightSubtree = SplitUp(ref p, rightSubtree, i);
         } 
         else if (i >= p.Left.Length) {
             //Go right
             i = i - p.Left.Length;
             //Console.WriteLine("Go right down");
             rightSubtree = Split(p.Right, i);
+            //Console.WriteLine("right tree after split()");
+            //PrintRope(rightSubtree, 0);
 
             //Going up
             //Console.WriteLine("Going up");
             i = i + p.Left.Length;
             //Console.WriteLine("index: " + i);
-            rightSubtree = SplitUp(p, rightSubtree, i);
+            rightSubtree = SplitUp(ref p, rightSubtree, i);
         }
+
+        root = p;
         return rightSubtree;
+    }*/
+    /*private Node Split(Node root, int i) {
+        Node rightSubtreeRoot = null;
+
+        // Inner function to traverse and split the tree
+        Node traverse(Node current, int index, out bool shouldDetach) {
+            shouldDetach = false;
+
+            if (current == null) return null;
+
+            // If at a leaf node and index matches
+            if (index < current.Length && current.stringCharacters != "") {
+                string leftString = current.stringCharacters.Substring(0, index);
+                string rightString = current.stringCharacters.Substring(index);
+
+                current.stringCharacters = leftString; // Update current node's string
+                current.Length = leftString.Length; // Update length
+
+                // Create a new node for the right part of the split
+                Node rightPart = new Node(rightString) {
+                    Length = rightString.Length
+                };
+
+                if (index > 0) {
+                    rightSubtreeRoot = rightPart; // This node becomes the root of the right subtree
+                    shouldDetach = true; // Indicate that this subtree should be detached
+                }
+                return rightPart;
+            }
+
+            // Traversal logic
+            Node childResult = null;
+            if (index < current.Left?.Length) {
+                childResult = traverse(current.Left, index, out shouldDetach);
+                if (shouldDetach) current.Left = null; // Detach if needed
+            } else {
+                childResult = traverse(current.Right, index - (current.Left?.Length ?? 0), out shouldDetach);
+                if (shouldDetach) current.Right = null; // Detach if needed
+            }
+
+            return childResult;
+        }
+
+        bool shouldDetach; // This will be used to determine if the current subtree needs to be detached
+        traverse(root, i, out shouldDetach);
+        return rightSubtreeRoot;
+    }*/
+    //Split the rope with root p at index i and return the root of the right subtree (9 marks). DONE
+    private Node Split(Node p, int i) {
+        //Split a node's string into 2 parts, creates 2 new nodes to hold the left and right piece, then update p to refer to the new nodes
+        Node SplitNode(Node p, int i) {
+            string leftString = p.stringCharacters.Substring(0, i + 1);
+            string rightString = p.stringCharacters.Substring(i + 1);
+
+            //Create new subtrees to hold the new strings
+            Node leftChild = new Node(leftString);
+            leftChild.Length = leftString.Length;
+
+            Node rightChild = new Node(rightString);
+            rightChild.Length = rightString.Length;
+
+            //link the new nodes to p
+            p.Left = leftChild;
+            p.Right = rightChild;
+            p.Length = p.Left.Length + p.Right.Length;
+            p.stringCharacters = "";
+
+            return p;
+        }
+
+        Node BuildRightTree(Stack<Node> nodes) {
+            Node rightTree = null;
+
+            if (nodes.Count == 0) {
+                //Stack is empty
+                rightTree = null;
+                return rightTree;
+            } else if (nodes.Count == 1) {
+                //Stack contains one element
+                rightTree = nodes.Pop();
+                return rightTree;
+            } else {
+                //Stack contains many elements
+                rightTree = nodes.Pop();    //Removes having to use an if/else in the while loop
+                while (nodes.Count > 0) {
+                    //Concatenate this with the previous tree
+                    Console.WriteLine("Top node on stack");
+                    Console.WriteLine(nodes.Peek().stringCharacters);
+                    rightTree = Concatenate(rightTree, nodes.Pop());
+                    //Thread.Sleep(5000);
+                }
+                return rightTree;
+            }
+        }
+
+        Node SplitPrivate(Node p, int i, Stack<Node> nodesToConcatenate) {
+            Node rightTree = null;
+            Console.WriteLine("p: " + p.Length);
+            //Thread.Sleep(4000);
+            if (p.Left == null && p.Right == null) {
+                //At the leaf
+                Console.WriteLine("Leaf");
+                if (i == (p.Length - 1)) {
+                    //Case 1: no split occurs
+                    rightTree = null;
+                } else {
+                    //Case 2: Split occurs
+                    //Split the node
+                    p = SplitNode(p, i);
+
+                    //Add the right side to the stack
+                    nodesToConcatenate.Push(p.Right);
+
+                    //Remove the right side from the left tree
+                    p.Right = null;
+
+                    //Update length
+                    p.Length = p.Left.Length;
+                }
+                Console.WriteLine("bottom");
+                //Concatenate all of the nodes in the stack together to form the right tree (and the left tree should already by finished)
+                rightTree = BuildRightTree(nodesToConcatenate);
+                Console.WriteLine("Built right Tree");
+                PrintRope(rightTree, 0);
+
+                Console.WriteLine("left tree");
+                PrintRope(root, 0);
+                return rightTree;
+
+            } else if (i < p.Left.Length) {
+                //Go left
+                //Console.WriteLine("Left");
+                nodesToConcatenate.Push(p.Right);
+                p.Right = null;
+                rightTree = SplitPrivate(p.Left, i, nodesToConcatenate);
+            } else {
+                //Go right
+                //Console.WriteLine("right");
+                i = i - p.Left.Length;
+                rightTree = SplitPrivate(p.Right, i, nodesToConcatenate);
+            }
+
+            //Adjust length of left tree coming back up
+            int leftLen = 0;
+            int rightLen = 0;
+            if (p.Left != null) {
+                leftLen = p.Left.Length;
+            }
+            if (p.Right != null) {
+                rightLen = p.Right.Length;
+            }
+            p.Length = leftLen + rightLen;
+
+            return rightTree;
+        }
+
+        
+        Node rightTree = null;
+        Stack<Node> nodesToConcatenate = new Stack<Node>(); //Will hold the nodes of the right tree as we go down to the split
+        rightTree = SplitPrivate(root, i, nodesToConcatenate);
+
+        return rightTree;
     }
 }
 
@@ -521,7 +851,7 @@ class Program {
 
         mySplitRope = new Rope("aaaaaaaabbbbbbbbccccccccddddddddeeeeeeeeffffffffgggggggghhhhhhhh");
         mySplitRope.TestSplit(24);
-        
+
         mySplitRope = new Rope("aaaaaaaabbbbbbbbccccccccddddddddeeeeeeeeffffffffgggggggghhhhhhhh");
         mySplitRope.TestSplit(16);
 
@@ -539,10 +869,10 @@ class Program {
 
         mySplitRope = new Rope("");
         mySplitRope.TestSplit(0);
-        
+
         mySplitRope = new Rope("Hello ");
-        mySplitRope.TestSplit(2);
-        */
+        mySplitRope.TestSplit(2);*/
+
 
 
         //Testing ToString()
@@ -564,5 +894,24 @@ class Program {
 
         myRope = new Rope("aaaaaaaaaabbbbbbbbbbc"); //Test an unevenly split rope
         Console.WriteLine(myRope.ToString());*/
+
+
+        //Testing rebalance on a normal rope
+        Rope myRope = new Rope("aaaaaaaabbbbbbbbccccccccddddddddeeeeeeeeffffffffgggggggghhhhhhhh");
+        myRope.TestRebalance(7);    //
+        /*
+        myRope = new Rope("aaaaaaaabbbbbbbbccccccccddddddddeeeeeeeeffffffffgggggggghhhhhhhh");
+        myRope.TestRebalance(7);    //
+        myRope = new Rope("aaaaaaaabbbbbbbbccccccccddddddddeeeeeeeeffffffffgggggggghhhhhhhh");
+        myRope.TestRebalance(8);    //
+        myRope = new Rope("aaaaaaaabbbbbbbbccccccccddddddddeeeeeeeeffffffffgggggggghhhhhhhh");
+        myRope.TestRebalance(15);    //
+        myRope = new Rope("aaaaaaaabbbbbbbbccccccccddddddddeeeeeeeeffffffffgggggggghhhhhhhh");
+        myRope.TestRebalance(16);    //
+        myRope = new Rope("aaaaaaaabbbbbbbbccccccccddddddddeeeeeeeeffffffffgggggggghhhhhhhh");
+        myRope.TestRebalance(60);    //
+        myRope = new Rope("aaaaaaaabbbbbbbbccccccccddddddddeeeeeeeeffffffffgggggggghhhhhhhh");
+        myRope.TestRebalance(63);    //*/
+
     }
 }
