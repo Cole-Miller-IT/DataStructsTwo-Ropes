@@ -57,17 +57,56 @@ public class Rope {
 
     //Insert string S at index i(5 marks).
     public void Insert(string S, int i) {
-        //build a Rope for the string
+        int maxIndex = root.Length - 1;
+        Console.WriteLine("");
+        Console.WriteLine("-----------------------------------");
+        Console.WriteLine("Insert string: " + S + " at index " + i);
+        //Check if the index is out of range
+        if (i < 0 || i > maxIndex) {
+            //Out of range
+            Console.WriteLine("Index out of range Insert()");
+        } else {
+            //build a Rope for the string
+            Rope sRope = new Rope(S);
 
-        //split Rope where you want to insert
+            //split the root where you want to insert
+            Node rightTree = null;
+            if (i == 0) {
+                //don't split, insert infront of the tree
+            } else {
+                rightTree = Split(root, i);
+            }
 
-        //concate left side with the Rope for the string you want to insert
+            //concat left side with the Rope for the string you want to insert
+            Node leftTree = null;
+            if (i == 0) {
+                //insert string before the left tree
+                leftTree = Concatenate(sRope.root, root);
+            } else {
+                //insert string after the left tree
+                leftTree = Concatenate(root, sRope.root);
+            }
+            //Console.WriteLine("left tree concat with sRope");
+            //PrintRope(leftTree, 0);
 
-        //concat new Rope with the right side
+            //concat new Rope with the right side
+            if (i == 0 || i == maxIndex) {
+                //don't concat, right tree is null
+                root = leftTree;
+            } else {
+                root = Concatenate(leftTree, rightTree);
+                //Console.WriteLine("new root after concating everything");
+                //PrintRope();
+            }
 
-        //balance the tree
+            //balance the new tree
+            root = Rebalance();
 
-
+            Console.WriteLine("Final tree after insert");
+            PrintRope();
+            Console.WriteLine("Final string: ");
+            Console.WriteLine(ToString());
+        }    
     }
 
     //Delete the substring S[i, j](5 marks).
@@ -817,7 +856,38 @@ class Program {
         myRope.TestRebalance(999);          //Test incorrect index
         */
 
-        Rope myRope = new Rope("aaaaaaaabbbbbbbbccccccccddddddddeeeeeeeeffffffffgggggggghhhhhhhh");
-        myRope.Substring(0, 7);
+        //Test inserting a string < maxLengthofString characters
+        /*Rope myRope = new Rope("aaaaaaaabbbbbbbbccccccccddddddddeeeeeeeeffffffffgggggggghhhhhhhh");
+        myRope.Insert("Hello", 0);
+        myRope = new Rope("aaaaaaaabbbbbbbbccccccccddddddddeeeeeeeeffffffffgggggggghhhhhhhh");
+        myRope.Insert("Hello", 7);
+        myRope = new Rope("aaaaaaaabbbbbbbbccccccccddddddddeeeeeeeeffffffffgggggggghhhhhhhh");
+        myRope.Insert("Hello", 22);
+        myRope = new Rope("aaaaaaaabbbbbbbbccccccccddddddddeeeeeeeeffffffffgggggggghhhhhhhh");
+        myRope.Insert("Hello", 63);
+        //Test inserting a string == maxLengthofString characters
+        myRope = new Rope("aaaaaaaabbbbbbbbccccccccddddddddeeeeeeeeffffffffgggggggghhhhhhhh");
+        myRope.Insert("HelloWorld", 0);
+        myRope = new Rope("aaaaaaaabbbbbbbbccccccccddddddddeeeeeeeeffffffffgggggggghhhhhhhh");
+        myRope.Insert("HelloWorld", 7);
+        myRope = new Rope("aaaaaaaabbbbbbbbccccccccddddddddeeeeeeeeffffffffgggggggghhhhhhhh");
+        myRope.Insert("HelloWorld", 22);
+        myRope = new Rope("aaaaaaaabbbbbbbbccccccccddddddddeeeeeeeeffffffffgggggggghhhhhhhh");
+        myRope.Insert("HelloWorld", 63);
+        //Test inserting a string > maxLengthofString characters
+        myRope = new Rope("aaaaaaaabbbbbbbbccccccccddddddddeeeeeeeeffffffffgggggggghhhhhhhh");
+        myRope.Insert("HelloWorld!", 0);
+        myRope = new Rope("aaaaaaaabbbbbbbbccccccccddddddddeeeeeeeeffffffffgggggggghhhhhhhh");
+        myRope.Insert("HelloWorld!", 7);
+        myRope = new Rope("aaaaaaaabbbbbbbbccccccccddddddddeeeeeeeeffffffffgggggggghhhhhhhh");
+        myRope.Insert("HelloWorld!", 22);
+        myRope = new Rope("aaaaaaaabbbbbbbbccccccccddddddddeeeeeeeeffffffffgggggggghhhhhhhh");
+        myRope.Insert("HelloWorld!", 63);
+
+        //Test inserting an out of range index
+        myRope = new Rope("aaaaaaaabbbbbbbbccccccccddddddddeeeeeeeeffffffffgggggggghhhhhhhh");
+        myRope.Insert("HelloWorld!", -1);
+        myRope = new Rope("aaaaaaaabbbbbbbbccccccccddddddddeeeeeeeeffffffffgggggggghhhhhhhh");
+        myRope.Insert("HelloWorld!", 999);*/
     }
 }
