@@ -5,9 +5,12 @@ using System.Reflection.PortableExecutable;
 using System.Xml.Linq;
 
 //Implement these 2 compress/rebalance methods
+//Just take the string of the left tree after the split and call the build method on it 
 //1.After a Split, compress the path back to the root to ensure that binary tree is full, i.e. each non-leaf
 //node has two non - empty children(4 marks).
 
+//  10          10 (5 + 5) <-- this is the leaf now with the string chars
+// 5  5 -->  null null
 //2. Combine left and right siblings into one node whose total string length is 5 or less(4 marks).
 
 //node class
@@ -54,39 +57,65 @@ public class Rope {
 
     //Insert string S at index i(5 marks).
     public void Insert(string S, int i) {
+        //build a Rope for the string
+
+        //split Rope where you want to insert
+
+        //concate left side with the Rope for the string you want to insert
+
+        //concat new Rope with the right side
+
+        //balance the tree
+
 
     }
 
     //Delete the substring S[i, j](5 marks).
     public void Delete(int i, int j) {
+        //split tree a i, keep left side
+
+
+        //split the tree at j, keep left side
+
+        //concat left side and right side
+
+        //rebalance tree
+
 
     }
 
     //Return the substring S[i, j](6 marks).
     public string Substring(int i, int j) {
-        Node tempRoot = root;
+        Node tempRoot = root.DeepCopy();
+        PrintRope(tempRoot, 0);
 
         tempRoot = Split(tempRoot, i);
-        string iString = tempRoot.stringCharacters;
-        Console.WriteLine(iString);
+        PrintRope(tempRoot, 0);
 
-        //newRoot = Split(root, j);
-        //string jString = newRoot.stringCharacters;
-        //Console.WriteLine(jString);
+        Node rightTree = Split(tempRoot, j);
 
-        //string returnString = iString.Remove();
+        PrintRope(tempRoot, 0);
+        string returnString = tempRoot.ToString();
 
-        //return returnString;
-        return "-1";
+        return returnString;
     }
 
     //Return the index of the first occurrence of S; -1 otherwise(9 marks).
     public int Find(string S) {
-        //Keep a backup of the Root
+        //Not efficient but I don't have time to make this Find() method better
+        //Search through the tree for all characters that start with the first letter of string S, return as a list or something
 
-        //Call substring until you go through the whole Rope
+        //For all potential areas where the substring could be located
+            //get backup of root
 
+            //substring()
 
+            //if substring matches string S
+                //return index
+            //else
+                //continue
+
+        //If you go through all possibilites and did not find it, return -1
         return -1;
     }
 
@@ -666,7 +695,7 @@ public class Rope {
         Stack<Node> nodesToConcatenate = new Stack<Node>(); //Will hold the nodes of the right tree as we go down to the leaf node
         if (i > root.Length || i < 0) {
             Console.WriteLine("Index out of range for Split(). Split() not performed.");
-            return root;
+            return null;
         }
         
         return SplitPrivate(root, i, nodesToConcatenate);
@@ -757,7 +786,7 @@ class Program {
         myRope = new Rope("aaaaaaaabbbbbbbbccccccccddddddddeeeeeeeeffffffffgggggggghhhhhhhh");
         myRope.TestSplit(999);*/          //Test incorrect index
 
-
+        /*
         Rope myRope = new Rope("aaaaaaaabbbbbbbbccccccccddddddddeeeeeeeeffffffffgggggggghhhhhhhh");
         myRope.TestRebalance(0);            //Test left most element
         myRope = new Rope("aaaaaaaabbbbbbbbccccccccddddddddeeeeeeeeffffffffgggggggghhhhhhhh");
@@ -766,7 +795,7 @@ class Program {
         myRope.TestRebalance(8);            //Test random indexes
         myRope = new Rope("aaaaaaaabbbbbbbbccccccccddddddddeeeeeeeeffffffffgggggggghhhhhhhh");
         myRope.TestRebalance(55);            //Test random indexes
-        /*myRope = new Rope("aaaaaaaabbbbbbbbccccccccddddddddeeeeeeeeffffffffgggggggghhhhhhhh");
+        myRope = new Rope("aaaaaaaabbbbbbbbccccccccddddddddeeeeeeeeffffffffgggggggghhhhhhhh");
         myRope.TestRebalance(15);           //
         myRope = new Rope("aaaaaaaabbbbbbbbccccccccddddddddeeeeeeeeffffffffgggggggghhhhhhhh");
         myRope.TestRebalance(16);           //
@@ -787,5 +816,8 @@ class Program {
         myRope = new Rope("aaaaaaaabbbbbbbbccccccccddddddddeeeeeeeeffffffffgggggggghhhhhhhh");
         myRope.TestRebalance(999);          //Test incorrect index
         */
+
+        Rope myRope = new Rope("aaaaaaaabbbbbbbbccccccccddddddddeeeeeeeeffffffffgggggggghhhhhhhh");
+        myRope.Substring(0, 7);
     }
 }
