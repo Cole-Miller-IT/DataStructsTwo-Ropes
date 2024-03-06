@@ -55,7 +55,7 @@ public class Rope {
         //Console.WriteLine("");
     }
 
-    //Insert string S at index i(5 marks).
+    //Insert string S at index i(5 marks). DONE
     public void Insert(string S, int i) {
         int maxIndex = root.Length - 1;
         Console.WriteLine("");
@@ -109,34 +109,125 @@ public class Rope {
         }    
     }
 
-    //Delete the substring S[i, j](5 marks).
+    //Delete the substring S[i, j](5 marks). DONE
     public void Delete(int i, int j) {
-        //split tree a i, keep left side
+        Console.WriteLine("");
+        Console.WriteLine("-----------------------------------");
+        Console.WriteLine("Delete substring at index range: [" + i + "," + j + "]");
+        int maxIndex = root.Length - 1;
+
+        //Check index
+        if ((i < 0) || (j < 0) || (i > maxIndex) || (j > maxIndex)) {
+            Console.WriteLine("Index out of range Delete()");
+        }  else if (j < i) {
+            Console.WriteLine("Index ranges are invalid Delete()");
+        }
+        else {
+            Node rightTree = null;
+            Node leftTree = null;
+            //split tree a i, keep left side
+            if (i == 0) {
+                //Don't split, first char up to j is being removed
+            } else {
+                //left tree will be store in the root
+                rightTree = Split(root, i - 1); //i - 1 b/c if we did the split at i it would keep the first value that we want to remove
+            }
+            leftTree = root.DeepCopy();
 
 
-        //split the tree at j, keep left side
+            //split the tree at j, keep right side
+            if (j == maxIndex) {
+                //removing from i to the end of the tree
+                //so we can just take the left tree generated above
+            } else if (i == 0) {
+                //splitting from the start of the tree to j
+                rightTree = Split(root, j);
+            } else {
+                //j ends before the last index so a right tree will exist
+                j = j - i;  //update the index to work with the split tree
+                root = rightTree;
+                rightTree = Split(root, j);
+            }
 
-        //concat left side and right side
 
-        //rebalance tree
+            //Determine how the tree was split
+            if (i == 0) {
+                //Start of the tree was removed
+                //Determine if the whole tree was removed
+                if (j == maxIndex) {
+                    //Yes
+                    root = new Node("");
+                } else {
+                    //No
+                    root = rightTree;
+                }
+            } else if (j == maxIndex) {
+                //Removed i up to the end of the tree
+                root = leftTree;
+            } else {
+                //middle
+                root = Concatenate(leftTree, rightTree);
+            }
 
 
+            root = Rebalance();
+            Console.WriteLine("final tree");
+            PrintRope();
+        }
     }
 
-    //Return the substring S[i, j](6 marks).
+    //Return the substring S[i, j](6 marks). DONE
     public string Substring(int i, int j) {
-        Node tempRoot = root.DeepCopy();
-        PrintRope(tempRoot, 0);
+        int maxIndex = root.Length - 1;
+        Node rootBackup = root.DeepCopy();
 
-        tempRoot = Split(tempRoot, i);
-        PrintRope(tempRoot, 0);
+        Console.WriteLine("");
+        Console.WriteLine("-----------------------------------");
+        Console.WriteLine("Retrieving substring at index range [" + i + "," + j + "]");
+        //Console.WriteLine("Current Rope: ");
+        //PrintRope();
 
-        Node rightTree = Split(tempRoot, j);
 
-        PrintRope(tempRoot, 0);
-        string returnString = tempRoot.ToString();
+        //Check index
+        if ((i < 0) || (j < 0) || (i > maxIndex) || (j > maxIndex)) {
+            Console.WriteLine("Index out of range substring()");
+            return "-1";
+        } else if (j < i) {
+            Console.WriteLine("Index ranges are invalid substring()");
+            return "-1";
+        } else {
+            //Get substring
 
-        return returnString;
+            //
+            Node rightTree = null;
+            rightTree = Split(root, j); //root/left tree contains the start of the tree to j now
+            //Might need to rebalance here
+            //Console.WriteLine("root first split");
+            //PrintRope(root, 0);
+
+            if (i == 0) {
+                //i is at the start
+                //Do nothing, the tree already contains the substring
+            } else if (i == j) {
+                //i is at the end i
+                rightTree = Split(root, i - 1);
+                root = rightTree;
+            } else {
+                // i is > 0 and < j
+                rightTree = Split(root, i);
+                root = rightTree;
+            }
+
+            //Console.WriteLine("root after");
+            //PrintRope(root, 0);
+            string returnString = ToString();
+
+            //Restore root
+            root = rootBackup;
+
+            Console.WriteLine("Substring: " + returnString);
+            return ToString();
+        }    
     }
 
     //Return the index of the first occurrence of S; -1 otherwise(9 marks).
@@ -314,7 +405,7 @@ public class Rope {
             }
             if ((current.Left == null) && (current.Right == null)) {
                 //At a leaf node
-                //Console.WriteLine("LEaf");
+                //Console.WriteLine("Leaf");
                 //Console.WriteLine(current.stringCharacters);
                 return current.stringCharacters;
             }
@@ -649,7 +740,7 @@ public class Rope {
             return p;
         }
 
-        //Builds the Right tree by removign the nodes accumulated while traversing down the tree
+        //Builds the Right tree by removing the nodes accumulated while traversing down the tree
         Node BuildRightTree(Stack<Node> nodes) {
             Node rightTree = null;
 
@@ -675,6 +766,7 @@ public class Rope {
         //Recursively go down the tree, splits the node if required, and builds the left and right trees after the split.
         Node SplitPrivate(Node p, int i, Stack<Node> nodesToConcatenate) {
             Node rightTree = null;
+            //PrintRope(p, 0);
 
             //Traverse down the tree
             if (p.Left == null && p.Right == null) {
@@ -706,6 +798,7 @@ public class Rope {
             } else if (i < p.Left.Length) {
                 //Go left
                 //Console.WriteLine("Left");
+                //Console.WriteLine("i: " + i);
                 nodesToConcatenate.Push(p.Right);
                 p.Right = null;
                 rightTree = SplitPrivate(p.Left, i, nodesToConcatenate);
@@ -713,6 +806,7 @@ public class Rope {
                 //Go right
                 //Console.WriteLine("right");
                 i = i - p.Left.Length;
+                //Console.WriteLine("i: " + i);
                 rightTree = SplitPrivate(p.Right, i, nodesToConcatenate);
             }
 
@@ -732,12 +826,18 @@ public class Rope {
         
         
         Stack<Node> nodesToConcatenate = new Stack<Node>(); //Will hold the nodes of the right tree as we go down to the leaf node
-        if (i > root.Length || i < 0) {
+        if (i > p.Length || i < 0) {
             Console.WriteLine("Index out of range for Split(). Split() not performed.");
             return null;
         }
         
-        return SplitPrivate(root, i, nodesToConcatenate);
+        return SplitPrivate(p, i, nodesToConcatenate);
+        /*if (i > root.Length || i < 0) {
+            Console.WriteLine("Index out of range for Split(). Split() not performed.");
+            return null;
+        }
+
+        return SplitPrivate(root, i, nodesToConcatenate);*/
     }
 }
 
@@ -889,5 +989,48 @@ class Program {
         myRope.Insert("HelloWorld!", -1);
         myRope = new Rope("aaaaaaaabbbbbbbbccccccccddddddddeeeeeeeeffffffffgggggggghhhhhhhh");
         myRope.Insert("HelloWorld!", 999);*/
+
+        /*
+        Rope myRope = new Rope("aaaaaaaabbbbbbbbccccccccddddddddeeeeeeeeffffffffgggggggghhhhhhhh");
+        myRope.Delete(-1, -1);      //Test inserting an out of range index
+        myRope = new Rope("aaaaaaaabbbbbbbbccccccccddddddddeeeeeeeeffffffffgggggggghhhhhhhh");
+        myRope.Delete(999, 999);   //Test inserting an out of range index
+        myRope = new Rope("aaaaaaaabbbbbbbbccccccccddddddddeeeeeeeeffffffffgggggggghhhhhhhh");
+        myRope.Delete(23, 1);       //Test inserting an out of order index
+        myRope = new Rope("aaaaaaaabbbbbbbbccccccccddddddddeeeeeeeeffffffffgggggggghhhhhhhh");
+        myRope.Delete(0, 0);        //Test deleting the first character
+        myRope = new Rope("aaaaaaaabbbbbbbbccccccccddddddddeeeeeeeeffffffffgggggggghhhhhhhh");
+        myRope.Delete(63, 63);      //Test deleting the last character
+        myRope = new Rope("aaaaaaaabbbbbbbbccccccccddddddddeeeeeeeeffffffffgggggggghhhhhhhh");
+        myRope.Delete(0, 10);       //Test deleting front characters
+        myRope = new Rope("aaaaaaaabbbbbbbbccccccccddddddddeeeeeeeeffffffffgggggggghhhhhhhh");
+        myRope.Delete(23, 45);      //Test deleting middle characters
+        myRope = new Rope("aaaaaaaabbbbbbbbccccccccddddddddeeeeeeeeffffffffgggggggghhhhhhhh");
+        myRope.Delete(59, 63);      //Test deleting i to the end of the tree characters
+        myRope = new Rope("aaaaaaaabbbbbbbbccccccccddddddddeeeeeeeeffffffffgggggggghhhhhhhh");
+        myRope.Delete(2, 34);       //Test random characters
+        myRope = new Rope("aaaaaaaabbbbbbbbccccccccddddddddeeeeeeeeffffffffgggggggghhhhhhhh");
+        myRope.Delete(32, 63);      //Test random characters*/
+
+        Rope myRope = new Rope("aaaaaaaabbbbbbbbccccccccddddddddeeeeeeeeffffffffgggggggghhhhhhhh");
+        myRope.Substring(-1, -1);      //Test an out of range index
+        myRope = new Rope("aaaaaaaabbbbbbbbccccccccddddddddeeeeeeeeffffffffgggggggghhhhhhhh");
+        myRope.Substring(999, 999);   //Test an out of range index
+        myRope = new Rope("aaaaaaaabbbbbbbbccccccccddddddddeeeeeeeeffffffffgggggggghhhhhhhh");
+        myRope.Substring(23, 1);       //Test an out of order index
+        myRope = new Rope("aaaaaaaabbbbbbbbccccccccddddddddeeeeeeeeffffffffgggggggghhhhhhhh");
+        myRope.Substring(0, 0);        //Test the first character
+        myRope = new Rope("aaaaaaaabbbbbbbbccccccccddddddddeeeeeeeeffffffffgggggggghhhhhhhh");
+        myRope.Substring(63, 63);      //Test the last character
+        myRope = new Rope("aaaaaaaabbbbbbbbccccccccddddddddeeeeeeeeffffffffgggggggghhhhhhhh");
+        myRope.Substring(0, 10);       //Test front characters
+        myRope = new Rope("aaaaaaaabbbbbbbbccccccccddddddddeeeeeeeeffffffffgggggggghhhhhhhh");
+        myRope.Substring(23, 45);      //Test middle characters
+        myRope = new Rope("aaaaaaaabbbbbbbbccccccccddddddddeeeeeeeeffffffffgggggggghhhhhhhh");
+        myRope.Substring(59, 63);      //Test i to the end of the tree characters
+        myRope = new Rope("aaaaaaaabbbbbbbbccccccccddddddddeeeeeeeeffffffffgggggggghhhhhhhh");
+        myRope.Substring(2, 34);       //Test random characters
+        myRope = new Rope("aaaaaaaabbbbbbbbccccccccddddddddeeeeeeeeffffffffgggggggghhhhhhhh");
+        myRope.Substring(32, 63);      //Test random characters
     }
 }
