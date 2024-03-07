@@ -184,8 +184,8 @@ public class Rope {
         Console.WriteLine("");
         Console.WriteLine("-----------------------------------");
         Console.WriteLine("Retrieving substring at index range [" + i + "," + j + "]");
-        //Console.WriteLine("Current Rope: ");
-        //PrintRope();
+        Console.WriteLine("Current Rope: ");
+        PrintRope();
 
 
         //Check index
@@ -198,13 +198,14 @@ public class Rope {
         } else {
             //Get substring
 
-            //
+            //Remove the right portion of the tree first
             Node rightTree = null;
-            rightTree = Split(root, j); //root/left tree contains the start of the tree to j now
-            //Might need to rebalance here
+            rightTree = Split(root, j); //root/left tree contains the start of the tree to j now. This right Tree value is never used.
+            root = Rebalance();
             //Console.WriteLine("root first split");
             //PrintRope(root, 0);
 
+            //Remove the remaining portion of the tree
             if (i == 0) {
                 //i is at the start
                 //Do nothing, the tree already contains the substring
@@ -213,8 +214,8 @@ public class Rope {
                 rightTree = Split(root, i - 1);
                 root = rightTree;
             } else {
-                // i is > 0 and < j
-                rightTree = Split(root, i);
+                // i is > 0 and i < j
+                rightTree = Split(root, i - 1);
                 root = rightTree;
             }
 
@@ -226,26 +227,78 @@ public class Rope {
             root = rootBackup;
 
             Console.WriteLine("Substring: " + returnString);
-            return ToString();
+            return returnString;
         }    
     }
 
-    //Return the index of the first occurrence of S; -1 otherwise(9 marks).
+    //Return the index of the first occurrence of S; -1 otherwise(9 marks). DONE
     public int Find(string S) {
-        //Not efficient but I don't have time to make this Find() method better
+        //Not efficient and does not scale well, but I don't have time to make this Find() method better.
+        Console.WriteLine("");
+        Console.WriteLine("-----------------------------------");
+        Console.WriteLine("Finding string: " + S);
+        Console.WriteLine("Current Rope: ");
+        PrintRope();
+
+        //Performs an inorder traversal (recursively) gathering potential indices where the substring could be
+        List<int> GatherPointsOfInterest(Node current, List<int> list, ref int index) {
+            if (current.Left != null) {
+                //Go left
+                list = GatherPointsOfInterest(current.Left, list, ref index);
+            }
+            if (current.Right != null) {
+                //Go Right
+                list = GatherPointsOfInterest(current.Right, list, ref index);
+            }
+            if (current.Left == null && current.Right == null) {
+                //At leaf
+                //Search through the string characters
+                foreach (char c in current.stringCharacters) {
+                    if (c == S[0]) {
+                        //Console.WriteLine("Match at index " + index);
+                        list.Add(index);
+                    }
+                    index = index + 1;
+                }
+            }
+            return list;
+        }
+
         //Search through the tree for all characters that start with the first letter of string S, return as a list or something
+        List<int> potentialStartIndices = new List<int>();
+        int index = 0;
+        potentialStartIndices = GatherPointsOfInterest(root, potentialStartIndices, ref index);
+        
+        /*Console.WriteLine("Potential locations where string S could be found");
+        foreach (int item in potentialStartIndices) {
+            Console.WriteLine("Index: " + item);
+        }*/
 
-        //For all potential areas where the substring could be located
-            //get backup of root
 
-            //substring()
+        //For all potential indices where the substring could be located
+        int maxIndex = root.Length - 1;
+        int j = 0;
+        foreach (int i in potentialStartIndices) {
+            if ((i + S.Length) < maxIndex) {
+                //Won't go past the last value of the Rope
+                j = i + S.Length - 1;
+                //Console.WriteLine("Won't overrun length. i: " + i + ", j: " + j);
 
-            //if substring matches string S
-                //return index
-            //else
-                //continue
+                string potentialMatch = Substring(i, j);
+                Console.WriteLine("Potential Match: " + potentialMatch);
 
-        //If you go through all possibilites and did not find it, return -1
+                if (potentialMatch == S) {
+                    //Match
+                    Console.WriteLine("Match found at starting index: " + i);
+                    return i;
+                } else {
+                    Console.WriteLine("Not a match at index " + i);
+                }
+            }
+        }
+
+        //Did not find a match
+        Console.WriteLine("No match found");
         return -1;
     }
 
@@ -1012,6 +1065,7 @@ class Program {
         myRope = new Rope("aaaaaaaabbbbbbbbccccccccddddddddeeeeeeeeffffffffgggggggghhhhhhhh");
         myRope.Delete(32, 63);      //Test random characters*/
 
+        
         Rope myRope = new Rope("aaaaaaaabbbbbbbbccccccccddddddddeeeeeeeeffffffffgggggggghhhhhhhh");
         myRope.Substring(-1, -1);      //Test an out of range index
         myRope = new Rope("aaaaaaaabbbbbbbbccccccccddddddddeeeeeeeeffffffffgggggggghhhhhhhh");
@@ -1032,5 +1086,26 @@ class Program {
         myRope.Substring(2, 34);       //Test random characters
         myRope = new Rope("aaaaaaaabbbbbbbbccccccccddddddddeeeeeeeeffffffffgggggggghhhhhhhh");
         myRope.Substring(32, 63);      //Test random characters
+        myRope = new Rope("aaaaaaaabbbbbbbbccccccccddddddddeeeeeeeeffffffffgggggggghhhhhhhh");
+        myRope.Substring(8, 9);      //Test random characters
+
+        
+        /*Rope myRope = new Rope("aaaaaaaabbbbbbbbccccccccddddddddeeeeeeeeffffffffgggggggghhhhhhhh");
+        myRope.Find("zzz");     //Test a string not in the Rope
+        myRope = new Rope("aaaaaaaabbbbbbbbccccccccddddddddeeeeeeeeffffffffgggggggghhhhhhhh");
+        myRope.Find("aaa");     //Test a string in the Rope left side leaf node
+        myRope = new Rope("aaaaaaaabbbbbbbbccccccccddddddddeeeeeeeeffffffffgggggggghhhhhhhh");
+        myRope.Find("bb");      //Test a string in the Rope right side leaf node
+        myRope = new Rope("aaaaaaaabbbbbbbbccccccccddddddddeeeeeeeeffffffffgggggggghhhhhhhh");
+        myRope.Find("gggggg");  //Test a string in the Rope right side of the tree
+        myRope = new Rope("aaaaaaaabbbbbbbbccccccccddddddddeeeeeeeeffffffffgggggggghhhhhhhh");
+        myRope.Find("h");       //Test a string in the Rope with one character
+        myRope = new Rope("aaaaaaaabbbbbbbbccccccccddddddddeeeeeeeeffffffffgggggggghhhhhhhh");
+        myRope.Find("aabb");    //Test a string in the Rope that spans multiple ropes
+        myRope = new Rope("aaaaaaaabbbbbbbbccccccccddddddddeeeeeeeeffffffffgggggggghhhhhhhh");
+        myRope.Find("bccccccccddddddddeeeeeeeeffffffffgg");    //Test a string in the Rope that spans multiple ropes
+        myRope = new Rope("aaaaaaaaaaaaaaaaccccccccddddddddeeeeeeeeffffffffgggggggghhhhhhhh");
+        myRope.Find("aabb");*/    //Test a string that won't find a match with valid characters in the rope
+
     }
 }
