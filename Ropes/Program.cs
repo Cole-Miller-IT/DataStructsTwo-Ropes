@@ -4,14 +4,6 @@ using System.Reflection;
 using System.Reflection.PortableExecutable;
 using System.Xml.Linq;
 
-//Implement these 2 compress/rebalance methods
-//Just take the string of the left tree after the split and call the build method on it 
-//1.After a Split, compress the path back to the root to ensure that binary tree is full, i.e. each non-leaf
-//node has two non - empty children(4 marks).
-
-//  10          10 (5 + 5) <-- this is the leaf now with the string chars
-// 5  5 -->  null null
-//2. Combine left and right siblings into one node whose total string length is 5 or less(4 marks).
 
 //node class
 public class Node {
@@ -41,6 +33,7 @@ public class Node {
     }
 }
 
+//This was a b**** to implement and there's lots of improvements I can do to it
 public class Rope {
     const int maxLeafStringLength = 10; //Final length
     Node root = null;
@@ -279,11 +272,13 @@ public class Rope {
         int maxIndex = root.Length - 1;
         int j = 0;
         foreach (int i in potentialStartIndices) {
+            //Check if the i to j range is valid
             if ((i + S.Length) < maxIndex) {
                 //Won't go past the last value of the Rope
                 j = i + S.Length - 1;
                 //Console.WriteLine("Won't overrun length. i: " + i + ", j: " + j);
 
+                //Retrieve substring
                 string potentialMatch = Substring(i, j);
                 Console.WriteLine("Potential Match: " + potentialMatch);
 
@@ -493,7 +488,7 @@ public class Rope {
         PrintRope(node.Left, depth + 1);
     }
 
-    //Tests the split() method b/c it's private
+    //Tests the Split() method b/c it's private
     public void TestSplit(int index) {
         Console.WriteLine("------------------------------");
         Console.WriteLine("");
@@ -512,7 +507,7 @@ public class Rope {
         PrintRope(root, 0);
     }
 
-    //Tests the rebalance() method b/c it's private
+    //Tests the Rebalance() method b/c it's private
     public void TestRebalance(int index) {
         Console.WriteLine("------------------------------");
         Console.WriteLine("");
@@ -561,6 +556,50 @@ public class Rope {
     }
 
     ////////////////////////Private Methods////////////////////////////////
+    //2. Combine left and right siblings into one node whose total string length is 5 or less (4 marks).
+    //I don't know if you mean  p    -->  p(4)     or     p    -->   p(9)   NOTE: I went with the right one.
+    //                        3   1   null  null        5   4     null  null
+    //I changed this method a little bit. If the left and right children's combined length are <= MaxStringLength then compress them.  i.e. 6(left) and 4(right) would now also get compressed
+    private Node Compress(Node current) {
+        if (current.Left == null && current.Right == null) {
+            Console.WriteLine("Leaf node");
+            //Do nothing
+        } else if (current.Left != null && current.Right == null) {
+            //only left child exists
+            //Can I compress?
+            if (current.Left.Length <= maxLeafStringLength) {
+                //yes
+                current = current.Left;
+            } else { 
+                //no, do nothing
+            }
+        } else if (current.Left == null && current.Right != null) {
+            //only right child exists
+            //Can I compress?
+            if (current.Right.Length <= maxLeafStringLength) {
+                //yes
+                current = current.Right;
+            } else {
+                //no
+            }
+        } else { //current.Left != null && current.Right != null
+            //both children exist
+            //Can I compress?
+            int combinedChildrensLength = current.Left.Length + current.Right.Length;
+            if (combinedChildrensLength <= maxLeafStringLength) {
+                //yes
+                //Compress the two children into the parent node
+                current.stringCharacters = current.Left.stringCharacters + current.Right.stringCharacters;
+                current.Length = combinedChildrensLength;
+                current.Left = null;
+                current.Right = null;
+            } else {
+                //no
+            }
+        }
+
+        return current;
+    }
 
     //Recursively build a balanced rope for S[i, j] and return its root (part of the constructor). DONE
     private Node Build(string s, int i, int j) {
@@ -769,7 +808,7 @@ public class Rope {
         return rebalanceTree;
     }
 
-    //Time complexity for figuring out this method O(too got damn long x4) 
+    //Time complexity for figuring out this method O(too got damn long) 
     //Split the rope with root p at index i and return the root of the right subtree (9 marks). DONE
     private Node Split(Node p, int i) {
         //Split a node's string into 2 parts, creates 2 new nodes to hold the left and right piece, then update p to refer to the new nodes
@@ -846,6 +885,10 @@ public class Rope {
                 //Concatenate all of the nodes in the stack together to form the right tree (and the left tree should already by finished)
                 rightTree = BuildRightTree(nodesToConcatenate);
 
+                //1.After a Split, compress the path back to the root to ensure that binary tree is full, i.e. each non-leaf
+                //node has two non - empty children (4 marks).
+                root = Compress(p);
+
                 return rightTree;
 
             } else if (i < p.Left.Length) {
@@ -855,12 +898,16 @@ public class Rope {
                 nodesToConcatenate.Push(p.Right);
                 p.Right = null;
                 rightTree = SplitPrivate(p.Left, i, nodesToConcatenate);
+
+                p.Left = root;
             } else {
                 //Go right
                 //Console.WriteLine("right");
                 i = i - p.Left.Length;
                 //Console.WriteLine("i: " + i);
                 rightTree = SplitPrivate(p.Right, i, nodesToConcatenate);
+
+                p.Right = root;
             }
 
             //Adjust length of left tree coming back up
@@ -874,23 +921,21 @@ public class Rope {
             }
             p.Length = leftLen + rightLen;
 
+            //1.After a Split, compress the path back to the root to ensure that binary tree is full, i.e. each non-leaf
+            //node has two non - empty children (4 marks).
+            root = Compress(p);
+
             return rightTree;
         }
         
-        
-        Stack<Node> nodesToConcatenate = new Stack<Node>(); //Will hold the nodes of the right tree as we go down to the leaf node
+        //Start of Split()
         if (i > p.Length || i < 0) {
             Console.WriteLine("Index out of range for Split(). Split() not performed.");
             return null;
         }
-        
-        return SplitPrivate(p, i, nodesToConcatenate);
-        /*if (i > root.Length || i < 0) {
-            Console.WriteLine("Index out of range for Split(). Split() not performed.");
-            return null;
-        }
+        Stack<Node> nodesToConcatenate = new Stack<Node>(); //Will hold the nodes of the right tree as we go down to the leaf node
 
-        return SplitPrivate(root, i, nodesToConcatenate);*/
+        return SplitPrivate(p, i, nodesToConcatenate);
     }
 }
 
@@ -901,21 +946,29 @@ class Program {
     static void Main(string[] args) {
         //Console.WriteLine("Hello World!");
 
-        //Rope myRope = new Rope("H");                  //Test one character
-        //Rope myRope = new Rope("Hello Worl");         //Test 10 characters
-        //Rope myRope = new Rope("abcdefghijklomnpqrstuvwxyz ABCDEFGa");         //Test more than 10 characters
-        /*string myString = "A string, by definition, is a linear sequence of characters representing a word, sentence, or body of text. Not surprisingly, strings are an integral and convenient part of most high - level programming languages. In C#, strings are supported by the String and StringBuilder library classes which include standard methods to concatenate two strings, return a substring, find the character at a given index, find the index of a given character, among others. Intuitively, each string is implemented as a linear array of characters which for the most part works reasonably well.For methods that retrieve characters or substrings, the linear array is ideal.But as a length of the string grows considerably longer as in the case of text, methods that require a wholesale shift or copy of characters are slowed by their linear time complexity.The question then arises: Can we do better overall for very long strings ?";
-        Rope myRope = new Rope(myString);             //Test a paragraph
+        //Test Build()
+        Rope myRope = new Rope("H");                //Test one character
 
+        myRope = new Rope("");                      //Test no characters
+            
+        myRope = new Rope("Hello Worl");            //Test 10 characters
+
+        myRope = new Rope("abcdefghijklomnpqrstuvwxyz ABCDEFGa");         //Test more than 10 characters
+
+        string myString = "A string, by definition, is a linear sequence of characters representing a word, sentence, or body of text. Not surprisingly, strings are an integral and convenient part of most high - level programming languages. In C#, strings are supported by the String and StringBuilder library classes which include standard methods to concatenate two strings, return a substring, find the character at a given index, find the index of a given character, among others. Intuitively, each string is implemented as a linear array of characters which for the most part works reasonably well.For methods that retrieve characters or substrings, the linear array is ideal.But as a length of the string grows considerably longer as in the case of text, methods that require a wholesale shift or copy of characters are slowed by their linear time complexity.The question then arises: Can we do better overall for very long strings ?";
+        myRope = new Rope(myString);             //Test a paragraph
+
+        myRope = new Rope("aaaaaaaabbbbbbbbccccccccddddddddeeeeeeeeffffffffgggggggghhhhhhhh");
         Console.WriteLine(myRope.Length());
 
+        myRope = new Rope("abcdefghijklomnpqrstuvwxyz ABCDEFGa");         
         Console.WriteLine(myRope.CharAt(-1));           //Test invalid index
         Console.WriteLine(myRope.CharAt(999));          //Test invalid index
         Console.WriteLine(myRope.CharAt(0));            //Test going left
         Console.WriteLine(myRope.CharAt(33));           //Test going right
         Console.WriteLine(myRope.CharAt(9));            //Test going left then right
         Console.WriteLine(myRope.CharAt(17));           //Test going right then left
-
+       
         Console.WriteLine("location of c at index: " + myRope.IndexOf('c'));         //Test valid character
         Console.WriteLine("location of k at index: " + myRope.IndexOf('k'));         //Test valid character
         Console.WriteLine("location of y at index: " + myRope.IndexOf('y'));         //Test valid character
@@ -924,22 +977,30 @@ class Program {
         Console.WriteLine("location of a at index: " + myRope.IndexOf('a'));         //Test valid character with two chars in array
 
 
-        Rope myReverseRope = new Rope("abcdefg");                       //Testing Reverse() with only the root node       
+        Rope myReverseRope = new Rope("abcdefg");                       //Testing Reverse() with only the root node
+        Console.WriteLine("Normal Rope");
+        myReverseRope.PrintRope();
+
+        Console.WriteLine("Reversed Rope");
         myReverseRope.Reverse();
         myReverseRope.PrintRope();
 
+        
         myReverseRope = new Rope("Hello World! Goodbye World!");        //Testing Reverse() with multiple leaf nodes     
+        Console.WriteLine("Normal Rope");
+        myReverseRope.PrintRope();
+
+        Console.WriteLine("Reversed Rope");
         myReverseRope.Reverse();
         myReverseRope.PrintRope();
         Console.WriteLine("");
-        */
+        
 
 
 
 
         //Testing ToString()
-        /*
-        Rope myRope = new Rope("");         //Test empty
+        myRope = new Rope("");         //Test empty
         Console.WriteLine(myRope.ToString());
 
         myRope = new Rope("H");     //Test 1 char
@@ -955,11 +1016,11 @@ class Program {
         Console.WriteLine(myRope.ToString());
 
         myRope = new Rope("aaaaaaaaaabbbbbbbbbbc"); //Test an unevenly split rope
-        Console.WriteLine(myRope.ToString());*/
+        Console.WriteLine(myRope.ToString());
 
 
-        //Testing rebalance on a normal rope 
-        /*Rope myRope = new Rope("aaaaaaaabbbbbbbbccccccccddddddddeeeeeeeeffffffffgggggggghhhhhhhh");
+        //Testing Split() on a normal rope 
+        myRope = new Rope("aaaaaaaabbbbbbbbccccccccddddddddeeeeeeeeffffffffgggggggghhhhhhhh");
         myRope.TestSplit(0);            //Test left most element
         myRope = new Rope("aaaaaaaabbbbbbbbccccccccddddddddeeeeeeeeffffffffgggggggghhhhhhhh");
         myRope.TestSplit(7);        //Test right side of left most element
@@ -976,10 +1037,10 @@ class Program {
         myRope = new Rope("aaaaaaaabbbbbbbbccccccccddddddddeeeeeeeeffffffffgggggggghhhhhhhh");
         myRope.TestSplit(-1);           //Test incorrect index
         myRope = new Rope("aaaaaaaabbbbbbbbccccccccddddddddeeeeeeeeffffffffgggggggghhhhhhhh");
-        myRope.TestSplit(999);*/          //Test incorrect index
+        myRope.TestSplit(999);         //Test incorrect index
 
-        /*
-        Rope myRope = new Rope("aaaaaaaabbbbbbbbccccccccddddddddeeeeeeeeffffffffgggggggghhhhhhhh");
+        //Test Reblance
+        myRope = new Rope("aaaaaaaabbbbbbbbccccccccddddddddeeeeeeeeffffffffgggggggghhhhhhhh");
         myRope.TestRebalance(0);            //Test left most element
         myRope = new Rope("aaaaaaaabbbbbbbbccccccccddddddddeeeeeeeeffffffffgggggggghhhhhhhh");
         myRope.TestRebalance(7);            //Test right side of left most element
@@ -1007,10 +1068,10 @@ class Program {
         myRope.TestRebalance(-1);           //Test incorrect index
         myRope = new Rope("aaaaaaaabbbbbbbbccccccccddddddddeeeeeeeeffffffffgggggggghhhhhhhh");
         myRope.TestRebalance(999);          //Test incorrect index
-        */
+        
 
         //Test inserting a string < maxLengthofString characters
-        /*Rope myRope = new Rope("aaaaaaaabbbbbbbbccccccccddddddddeeeeeeeeffffffffgggggggghhhhhhhh");
+        myRope = new Rope("aaaaaaaabbbbbbbbccccccccddddddddeeeeeeeeffffffffgggggggghhhhhhhh");
         myRope.Insert("Hello", 0);
         myRope = new Rope("aaaaaaaabbbbbbbbccccccccddddddddeeeeeeeeffffffffgggggggghhhhhhhh");
         myRope.Insert("Hello", 7);
@@ -1041,10 +1102,10 @@ class Program {
         myRope = new Rope("aaaaaaaabbbbbbbbccccccccddddddddeeeeeeeeffffffffgggggggghhhhhhhh");
         myRope.Insert("HelloWorld!", -1);
         myRope = new Rope("aaaaaaaabbbbbbbbccccccccddddddddeeeeeeeeffffffffgggggggghhhhhhhh");
-        myRope.Insert("HelloWorld!", 999);*/
+        myRope.Insert("HelloWorld!", 999);
 
-        /*
-        Rope myRope = new Rope("aaaaaaaabbbbbbbbccccccccddddddddeeeeeeeeffffffffgggggggghhhhhhhh");
+        
+        myRope = new Rope("aaaaaaaabbbbbbbbccccccccddddddddeeeeeeeeffffffffgggggggghhhhhhhh");
         myRope.Delete(-1, -1);      //Test inserting an out of range index
         myRope = new Rope("aaaaaaaabbbbbbbbccccccccddddddddeeeeeeeeffffffffgggggggghhhhhhhh");
         myRope.Delete(999, 999);   //Test inserting an out of range index
@@ -1066,7 +1127,7 @@ class Program {
         myRope.Delete(32, 63);      //Test random characters*/
 
         
-        Rope myRope = new Rope("aaaaaaaabbbbbbbbccccccccddddddddeeeeeeeeffffffffgggggggghhhhhhhh");
+        myRope = new Rope("aaaaaaaabbbbbbbbccccccccddddddddeeeeeeeeffffffffgggggggghhhhhhhh");
         myRope.Substring(-1, -1);      //Test an out of range index
         myRope = new Rope("aaaaaaaabbbbbbbbccccccccddddddddeeeeeeeeffffffffgggggggghhhhhhhh");
         myRope.Substring(999, 999);   //Test an out of range index
@@ -1090,7 +1151,7 @@ class Program {
         myRope.Substring(8, 9);      //Test random characters
 
         
-        /*Rope myRope = new Rope("aaaaaaaabbbbbbbbccccccccddddddddeeeeeeeeffffffffgggggggghhhhhhhh");
+        myRope = new Rope("aaaaaaaabbbbbbbbccccccccddddddddeeeeeeeeffffffffgggggggghhhhhhhh");
         myRope.Find("zzz");     //Test a string not in the Rope
         myRope = new Rope("aaaaaaaabbbbbbbbccccccccddddddddeeeeeeeeffffffffgggggggghhhhhhhh");
         myRope.Find("aaa");     //Test a string in the Rope left side leaf node
@@ -1105,7 +1166,34 @@ class Program {
         myRope = new Rope("aaaaaaaabbbbbbbbccccccccddddddddeeeeeeeeffffffffgggggggghhhhhhhh");
         myRope.Find("bccccccccddddddddeeeeeeeeffffffffgg");    //Test a string in the Rope that spans multiple ropes
         myRope = new Rope("aaaaaaaaaaaaaaaaccccccccddddddddeeeeeeeeffffffffgggggggghhhhhhhh");
-        myRope.Find("aabb");*/    //Test a string that won't find a match with valid characters in the rope
-
+        myRope.Find("aabb");    //Test a string that won't find a match with valid characters in the rope
+        
+        //Testing Compress() split optimizations
+        myRope = new Rope("aaaaaaaabbbbbbbbccccccccddddddddeeeeeeeeffffffffgggggggghhhhhhhh");
+        myRope.TestSplit(0);        //Test left most element
+        myRope = new Rope("aaaaaaaabbbbbbbbccccccccddddddddeeeeeeeeffffffffgggggggghhhhhhhh");
+        myRope.TestSplit(7);        //Test left tree
+        myRope = new Rope("aaaaaaaabbbbbbbbccccccccddddddddeeeeeeeeffffffffgggggggghhhhhhhh");
+        myRope.TestSplit(32);       //Test right tree
+        myRope = new Rope("aaaaaaaabbbbbbbbccccccccddddddddeeeeeeeeffffffffgggggggghhhhhhhh");
+        myRope.TestSplit(54);
+        myRope = new Rope("aaaaaaaabbbbbbbbccccccccddddddddeeeeeeeeffffffffgggggggghhhhhhhh");
+        myRope.TestSplit(63);       //Test right most element
+        myRope = new Rope("aaaaaaaabbbbbbbbccccccccddddddddeeeeeeeeffffffffgggggggghhhhhhhh");
+        myRope.TestSplit(2);
+        myRope = new Rope("aaaaaaaabbbbbbbbccccccccddddddddeeeeeeeeffffffffgggggggghhhhhhhh");
+        myRope.TestSplit(76);       //Test invalid index
+        myRope = new Rope("aaaaaaaabbbbbbbbccccccccddddddddeeeeeeeeffffffffgggggggghhhhhhhh");
+        myRope.TestSplit(34);
+        myRope = new Rope("aaaaaaaabbbbbbbbccccccccddddddddeeeeeeeeffffffffgggggggghhhhhhhh");
+        myRope.TestSplit(45);       
+        myRope = new Rope("aaaaaaaabbbbbbbbccccccccddddddddeeeeeeeeffffffffgggggggghhhhhhhh");
+        myRope.TestSplit(8);
+        myRope = new Rope("aaaaaaaabbbbbbbbccccccccddddddddeeeeeeeeffffffffgggggggghhhhhhhh");
+        myRope.TestSplit(15);
+        myRope = new Rope("aaaaaaaabbbbbbbbccccccccddddddddeeeeeeeeffffffffgggggggghhhhhhhh");
+        myRope.TestSplit(16);
+        myRope = new Rope("aaaaaaaabbbbbbbbccccccccddddddddeeeeeeeeffffffffgggggggghhhhhhhh");
+        myRope.TestSplit(21);
     }
 }
